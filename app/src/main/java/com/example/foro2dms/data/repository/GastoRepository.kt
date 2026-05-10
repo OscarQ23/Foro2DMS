@@ -50,6 +50,23 @@ class GastoRepository(
         }
     }
 
+    suspend fun updateGasto(gasto: Gasto): Result<Unit> {
+        return try {
+            val uid = auth.currentUser?.uid
+                ?: return Result.failure(IllegalStateException("No hay usuario autenticado"))
+
+            if (gasto.id.isBlank()) {
+                return Result.failure(IllegalArgumentException("El gasto no tiene ID"))
+            }
+
+            val gastoConUserId = gasto.copy(userId = uid)
+            gastosCollection().document(gasto.id).set(gastoConUserId).await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     suspend fun deleteGasto(gastoId: String): Result<Unit> {
         return try {
             gastosCollection().document(gastoId).delete().await()

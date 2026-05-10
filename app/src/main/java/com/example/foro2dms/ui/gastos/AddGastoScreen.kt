@@ -9,15 +9,16 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -33,6 +34,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import com.example.foro2dms.data.model.Gasto
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -40,17 +42,30 @@ import java.util.Locale
 @Composable
 fun AddGastoScreen(
     categorias: List<String>,
+    gastoExistente: Gasto? = null,
     onSave: (nombre: String, monto: Double, categoria: String, fecha: Long) -> Unit,
+    onUpdate: (id: String, nombre: String, monto: Double, categoria: String, fecha: Long) -> Unit,
     onClose: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var nombre by remember { mutableStateOf("") }
-    var montoTexto by remember { mutableStateOf("") }
-    var categoria by remember(categorias) {
-        mutableStateOf(categorias.firstOrNull() ?: "")
+    val esEdicion = gastoExistente != null
+
+    var nombre by remember { mutableStateOf(gastoExistente?.nombre ?: "") }
+    var montoTexto by remember {
+        mutableStateOf(gastoExistente?.monto?.takeIf { it > 0 }?.toString() ?: "")
     }
-    var fecha by remember { mutableStateOf(System.currentTimeMillis()) }
+    var categoria by remember(categorias, gastoExistente) {
+        mutableStateOf(
+            gastoExistente?.categoria?.takeIf { it.isNotBlank() }
+                ?: categorias.firstOrNull()
+                ?: ""
+        )
+    }
+    var fecha by remember {
+        mutableStateOf(gastoExistente?.fecha ?: System.currentTimeMillis())
+    }
     var showDatePicker by remember { mutableStateOf(false) }
+    var dropdownExpanded by remember { mutableStateOf(false) }
 
     BackHandler { onClose() }
 
@@ -63,7 +78,7 @@ fun AddGastoScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Nuevo gasto") },
+                title = { Text(if (esEdicion) "Editar gasto" else "Nuevo gasto") },
                 navigationIcon = {
                     TextButton(onClick = onClose) { Text("Cancelar") }
                 }
@@ -102,15 +117,35 @@ fun AddGastoScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            Text("Categoría", style = MaterialTheme.typography.bodyMedium)
-            Spacer(modifier = Modifier.height(8.dp))
-            LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                items(categorias) { cat ->
-                    FilterChip(
-                        selected = categoria == cat,
-                        onClick = { categoria = cat },
-                        label = { Text(cat) }
-                    )
+            ExposedDropdownMenuBox(
+                expanded = dropdownExpanded,
+                onExpandedChange = { dropdownExpanded = !dropdownExpanded }
+            ) {
+                OutlinedTextField(
+                    value = categoria,
+                    onValueChange = {},
+                    readOnly = true,
+                    label = { Text("Categoría") },
+                    trailingIcon = {
+                        ExposedDropdownMenuDefaults.TrailingIcon(expanded = dropdownExpanded)
+                    },
+                    modifier = Modifier
+                        .menuAnchor(MenuAnchorType.PrimaryNotEditable)
+                        .fillMaxWidth()
+                )
+                ExposedDropdownMenu(
+                    expanded = dropdownExpanded,
+                    onDismissRequest = { dropdownExpanded = false }
+                ) {
+                    categorias.forEach { cat ->
+                        DropdownMenuItem(
+                            text = { Text(cat) },
+                            onClick = {
+                                categoria = cat
+                                dropdownExpanded = false
+                            }
+                        )
+                    }
                 }
             }
 
@@ -137,13 +172,18 @@ fun AddGastoScreen(
                 }
                 Button(
                     onClick = {
-                        onSave(nombre.trim(), montoDouble ?: 0.0, categoria, fecha)
+                        val monto = montoDouble ?: 0.0
+                        if (esEdicion) {
+                            onUpdate(gastoExistente!!.id, nombre.trim(), monto, categoria, fecha)
+                        } else {
+                            onSave(nombre.trim(), monto, categoria, fecha)
+                        }
                         onClose()
                     },
                     enabled = formularioValido,
                     modifier = Modifier.fillMaxWidth().weight(1f)
                 ) {
-                    Text("Guardar")
+                    Text(if (esEdicion) "Actualizar" else "Guardar")
                 }
             }
         }
