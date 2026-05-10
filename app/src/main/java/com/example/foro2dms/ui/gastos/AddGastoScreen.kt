@@ -36,26 +36,19 @@ import androidx.compose.ui.unit.dp
 import java.text.SimpleDateFormat
 import java.util.Locale
 
-val CATEGORIAS = listOf(
-    "Comida",
-    "Transporte",
-    "Servicios",
-    "Entretenimiento",
-    "Salud",
-    "Educación",
-    "Otros"
-)
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddGastoScreen(
+    categorias: List<String>,
     onSave: (nombre: String, monto: Double, categoria: String, fecha: Long) -> Unit,
     onClose: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     var nombre by remember { mutableStateOf("") }
     var montoTexto by remember { mutableStateOf("") }
-    var categoria by remember { mutableStateOf(CATEGORIAS.first()) }
+    var categoria by remember(categorias) {
+        mutableStateOf(categorias.firstOrNull() ?: "")
+    }
     var fecha by remember { mutableStateOf(System.currentTimeMillis()) }
     var showDatePicker by remember { mutableStateOf(false) }
 
@@ -112,7 +105,7 @@ fun AddGastoScreen(
             Text("Categoría", style = MaterialTheme.typography.bodyMedium)
             Spacer(modifier = Modifier.height(8.dp))
             LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                items(CATEGORIAS) { cat ->
+                items(categorias) { cat ->
                     FilterChip(
                         selected = categoria == cat,
                         onClick = { categoria = cat },

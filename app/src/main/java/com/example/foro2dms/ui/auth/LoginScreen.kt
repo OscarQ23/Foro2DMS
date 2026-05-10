@@ -2,6 +2,7 @@ package com.example.foro2dms.ui.auth
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -11,7 +12,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -32,6 +35,7 @@ import com.example.foro2dms.ui.theme.Foro2DMSTheme
 fun LoginScreen(
     onLoginClick: (email: String, password: String) -> Unit,
     onRegisterClick: (email: String, password: String) -> Unit,
+    onGoogleClick: () -> Unit,
     isLoading: Boolean = false,
     errorMessage: String? = null,
     modifier: Modifier = Modifier
@@ -116,6 +120,31 @@ fun LoginScreen(
         ) {
             Text("Crear cuenta")
         }
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            HorizontalDivider(modifier = Modifier.weight(1f))
+            Text(
+                text = "  o  ",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            HorizontalDivider(modifier = Modifier.weight(1f))
+        }
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        OutlinedButton(
+            onClick = onGoogleClick,
+            enabled = !isLoading,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Continuar con Google")
+        }
     }
 }
 
@@ -125,7 +154,8 @@ private fun LoginScreenPreview() {
     Foro2DMSTheme {
         LoginScreen(
             onLoginClick = { _, _ -> },
-            onRegisterClick = { _, _ -> }
+            onRegisterClick = { _, _ -> },
+            onGoogleClick = {}
         )
     }
 }

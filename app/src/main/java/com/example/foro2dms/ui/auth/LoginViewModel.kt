@@ -74,6 +74,29 @@ class LoginViewModel(
         }
     }
 
+    fun loginWithGoogle(idToken: String) {
+        _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
+        viewModelScope.launch {
+            repository.signInWithGoogle(idToken)
+                .onSuccess {
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        isAuthenticated = true
+                    )
+                }
+                .onFailure { e ->
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        errorMessage = "No se pudo iniciar con Google: ${e.localizedMessage}"
+                    )
+                }
+        }
+    }
+
+    fun setError(message: String) {
+        _uiState.value = _uiState.value.copy(isLoading = false, errorMessage = message)
+    }
+
     fun signOut() {
         repository.signOut()
         _uiState.value = LoginUiState()

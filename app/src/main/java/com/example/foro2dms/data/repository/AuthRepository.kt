@@ -2,6 +2,7 @@ package com.example.foro2dms.data.repository
 
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
+import com.google.firebase.auth.GoogleAuthProvider
 import kotlinx.coroutines.tasks.await
 
 class AuthRepository(
@@ -27,6 +28,18 @@ class AuthRepository(
             val result = auth.createUserWithEmailAndPassword(email, password).await()
             val user = result.user
                 ?: return Result.failure(IllegalStateException("Usuario nulo tras registro"))
+            Result.success(user)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun signInWithGoogle(idToken: String): Result<FirebaseUser> {
+        return try {
+            val credential = GoogleAuthProvider.getCredential(idToken, null)
+            val result = auth.signInWithCredential(credential).await()
+            val user = result.user
+                ?: return Result.failure(IllegalStateException("Usuario nulo tras login con Google"))
             Result.success(user)
         } catch (e: Exception) {
             Result.failure(e)

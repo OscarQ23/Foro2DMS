@@ -2,7 +2,10 @@ package com.example.foro2dms.ui.gastos
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.foro2dms.data.model.Categoria
+import com.example.foro2dms.data.model.DEFAULT_CATEGORIAS
 import com.example.foro2dms.data.model.Gasto
+import com.example.foro2dms.data.repository.CategoriaRepository
 import com.example.foro2dms.data.repository.GastoRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -14,13 +17,28 @@ import java.util.Calendar
 
 data class GastosUiState(
     val gastos: List<Gasto> = emptyList(),
-    val isLoading: Boolean = false,
-    val errorMessage: String? = null,
-    val totalMensual: Double = 0.0
-)
+    val categoriasCustom: List<Categoria> = emptyList(),
+    val selectedYear: Int = Calendar.getInstance().get(Calendar.YEAR),
+    val selectedMonth: Int = Calendar.getInstance().get(Calendar.MONTH),
+    val errorMessage: String? = null
+) {
+    val gastosDelMes: List<Gasto>
+        get() = gastos.filter { gasto ->
+            val cal = Calendar.getInstance().apply { timeInMillis = gasto.fecha }
+            cal.get(Calendar.MONTH) == selectedMonth &&
+                cal.get(Calendar.YEAR) == selectedYear
+        }
+
+    val totalMesSeleccionado: Double
+        get() = gastosDelMes.sumOf { it.monto }
+
+    val nombresCategorias: List<String>
+        get() = DEFAULT_CATEGORIAS + categoriasCustom.map { it.nombre }
+}
 
 class GastosViewModel(
-    private val repository: GastoRepository = GastoRepository()
+    private val gastoRepository: GastoRepository = GastoRepository(),
+    private val categoriaRepository: CategoriaRepository = CategoriaRepository()
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(GastosUiState())
@@ -28,24 +46,29 @@ class GastosViewModel(
 
     init {
         observarGastos()
+        observarCategorias()
     }
 
     private fun observarGastos() {
         viewModelScope.launch {
-            repository.observeGastos()
+            gastoRepository.observeGastos()
                 .catch { e ->
                     _uiState.update {
                         it.copy(errorMessage = "Error al cargar gastos: ${e.localizedMessage}")
                     }
                 }
                 .collect { lista ->
-                    _uiState.update {
-                        it.copy(
-                            gastos = lista,
-                            totalMensual = calcularTotalMensual(lista),
-                            errorMessage = null
-                        )
-                    }
+                    _uiState.update { it.copy(gastos = lista, errorMessage = null) }
+                }
+        }
+    }
+
+    private fun observarCategorias() {
+        viewModelScope.launch {
+            categoriaRepository.observeCategorias()
+                .catch { }
+                .collect { lista ->
+                    _uiState.update { it.copy(categoriasCustom = lista) }
                 }
         }
     }
@@ -66,7 +89,7 @@ class GastosViewModel(
         )
 
         viewModelScope.launch {
-            repository.addGasto(gasto)
+            gastoRepository.addGasto(gasto)
                 .onFailure { e ->
                     _uiState.update {
                         it.copy(errorMessage = "No se pudo guardar: ${e.localizedMessage}")
@@ -77,7 +100,7 @@ class GastosViewModel(
 
     fun deleteGasto(gastoId: String) {
         viewModelScope.launch {
-            repository.deleteGasto(gastoId)
+            gastoRepository.deleteGasto(gastoId)
                 .onFailure { e ->
                     _uiState.update {
                         it.copy(errorMessage = "No se pudo eliminar: ${e.localizedMessage}")
@@ -86,21 +109,76 @@ class GastosViewModel(
         }
     }
 
-    fun clearError() {
-        _uiState.update { it.copy(errorMessage = null) }
+    fun addCategoria(nombre: String) {
+        val limpio = nombre.trim()
+        if (limpio.isBlank()) return
+
+        val yaExiste = _uiState.value.nombresCategorias.any {
+            it.equals(limpio, ignoreCase = true)
+        }
+        if (yaExiste) {
+            _uiState.update { it.copy(errorMessage = "Esa categoría ya existe") }
+            return
+        }
+
+        viewModelScope.launch {
+            categoriaRepository.addCategoria(limpio)
+                .onFailure { e ->
+                    _uiState.update {
+                        it.copy(errorMessage = "No se pudo crear: ${e.localizedMessage}")
+                    }
+                }
+        }
     }
 
-    private fun calcularTotalMensual(gastos: List<Gasto>): Double {
-        val ahora = Calendar.getInstance()
-        val mesActual = ahora.get(Calendar.MONTH)
-        val anioActual = ahora.get(Calendar.YEAR)
+    fun deleteCategoria(categoriaId: String) {
+        viewModelScope.launch {
+            categoriaRepository.deleteCategoria(categoriaId)
+                .onFailure { e ->
+                    _uiState.update {
+                        it.copy(errorMessage = "No se pudo eliminar: ${e.localizedMessage}")
+                    }
+                }
+        }
+    }
 
-        return gastos
-            .filter { gasto ->
-                val cal = Calendar.getInstance().apply { timeInMillis = gasto.fecha }
-                cal.get(Calendar.MONTH) == mesActual &&
-                    cal.get(Calendar.YEAR) == anioActual
+    fun previousMonth() {
+        _uiState.update {
+            val cal = Calendar.getInstance().apply {
+                set(it.selectedYear, it.selectedMonth, 1)
+                add(Calendar.MONTH, -1)
             }
-            .sumOf { it.monto }
+            it.copy(
+                selectedYear = cal.get(Calendar.YEAR),
+                selectedMonth = cal.get(Calendar.MONTH)
+            )
+        }
+    }
+
+    fun nextMonth() {
+        _uiState.update {
+            val cal = Calendar.getInstance().apply {
+                set(it.selectedYear, it.selectedMonth, 1)
+                add(Calendar.MONTH, 1)
+            }
+            it.copy(
+                selectedYear = cal.get(Calendar.YEAR),
+                selectedMonth = cal.get(Calendar.MONTH)
+            )
+        }
+    }
+
+    fun goToCurrentMonth() {
+        val cal = Calendar.getInstance()
+        _uiState.update {
+            it.copy(
+                selectedYear = cal.get(Calendar.YEAR),
+                selectedMonth = cal.get(Calendar.MONTH)
+            )
+        }
+    }
+
+    fun clearError() {
+        _uiState.update { it.copy(errorMessage = null) }
     }
 }

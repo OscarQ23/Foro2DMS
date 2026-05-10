@@ -12,7 +12,20 @@
           "package_name": "com.example.foro2dms"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "809346845663-el89ad757891l92pg7gvnhumeutpua26.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.foro2dms",
+            "certificate_hash": "5005426c67009d5fa1aafef63ac848485a161013"
+          }
+        },
+        {
+          "client_id": "809346845663-8i5fn1h9lhtpmu7g3dk7l2blkrfhb9f4.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyAV5LQFd5bF1vU0gaiNQCGQMWpZws_9QRw"
@@ -20,7 +33,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "809346845663-8i5fn1h9lhtpmu7g3dk7l2blkrfhb9f4.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }
