@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "809346845663",
+    "project_id": "foro2dms",
+    "storage_bucket": "foro2dms.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:809346845663:android:a5ee714cf0acbbe3b7526a",
+        "android_client_info": {
+          "package_name": "com.example.foro2dms"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAV5LQFd5bF1vU0gaiNQCGQMWpZws_9QRw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
