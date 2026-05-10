@@ -57,6 +57,7 @@ fun GastosListScreen(
     errorMessage: String?,
     onAddClick: () -> Unit,
     onDeleteClick: (String) -> Unit,
+    onEditClick: (Gasto) -> Unit,
     onPrevMonth: () -> Unit,
     onNextMonth: () -> Unit,
     onManageCategorias: () -> Unit,
@@ -146,6 +147,7 @@ fun GastosListScreen(
                         items(gastosDelDia, key = { it.id }) { gasto ->
                             GastoItem(
                                 gasto = gasto,
+                                onClick = { onEditClick(gasto) },
                                 onDelete = { onDeleteClick(gasto.id) }
                             )
                         }
@@ -227,8 +229,11 @@ private fun DayHeader(diaMillis: Long) {
 }
 
 @Composable
-private fun GastoItem(gasto: Gasto, onDelete: () -> Unit) {
-    Card(modifier = Modifier.fillMaxWidth()) {
+private fun GastoItem(gasto: Gasto, onClick: () -> Unit, onDelete: () -> Unit) {
+    Card(
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth()
+    ) {
         Row(
             modifier = Modifier
                 .padding(16.dp)

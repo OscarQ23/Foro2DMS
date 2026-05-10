@@ -98,6 +98,32 @@ class GastosViewModel(
         }
     }
 
+    fun updateGasto(id: String, nombre: String, monto: Double, categoria: String, fecha: Long) {
+        if (id.isBlank() || nombre.isBlank() || monto <= 0.0 || categoria.isBlank()) {
+            _uiState.update {
+                it.copy(errorMessage = "Completa todos los campos con valores válidos")
+            }
+            return
+        }
+
+        val gasto = Gasto(
+            id = id,
+            nombre = nombre.trim(),
+            monto = monto,
+            categoria = categoria,
+            fecha = fecha
+        )
+
+        viewModelScope.launch {
+            gastoRepository.updateGasto(gasto)
+                .onFailure { e ->
+                    _uiState.update {
+                        it.copy(errorMessage = "No se pudo actualizar: ${e.localizedMessage}")
+                    }
+                }
+        }
+    }
+
     fun deleteGasto(gastoId: String) {
         viewModelScope.launch {
             gastoRepository.deleteGasto(gastoId)
